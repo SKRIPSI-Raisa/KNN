@@ -53,13 +53,15 @@ def main():
     print("   PENGUJIAN REAL-TIME DENGAN KAMERA (KNN + GLCM + RGB)")
     print("="*60)
     
-    model_path = "knn_best.pkl"
-    scaler_path = "scaler.pkl"
-    le_path = "label_encoder.pkl"
+    # Gunakan path absolut berdasarkan lokasi file camera.py agar program bisa dijalankan dari folder mana saja
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(script_dir, "knn_best.pkl")
+    scaler_path = os.path.join(script_dir, "scaler.pkl")
+    le_path = os.path.join(script_dir, "label_encoder.pkl")
     
     if not (os.path.exists(model_path) and os.path.exists(scaler_path) and os.path.exists(le_path)):
         print("[ERROR] File model (.pkl) tidak lengkap!")
-        print("Pastikan file berikut ada di folder yang sama:")
+        print("Pastikan file berikut ada di folder yang sama dengan camera.py:")
         print(f" - {model_path}")
         print(f" - {scaler_path}")
         print(f" - {le_path}")
@@ -78,16 +80,44 @@ def main():
 
     # 2. Inisialisasi Kamera
     print("\nMembuka kamera...")
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
+    cap = None
+    
+    # Mencoba beberapa indeks kamera dan backend (prioritaskan DSHOW di Windows)
+    camera_indices = [0, 1, 2]
+    backends = [cv2.CAP_DSHOW, None] if os.name == 'nt' else [None]
+    
+    for idx in camera_indices:
+        for backend in backends:
+            try:
+                if backend is not None:
+                    print(f"Mencoba membuka kamera indeks {idx} dengan backend DSHOW...")
+                    temp_cap = cv2.VideoCapture(idx, backend)
+                else:
+                    print(f"Mencoba membuka kamera indeks {idx} dengan backend default...")
+                    temp_cap = cv2.VideoCapture(idx)
+                
+                if temp_cap.isOpened():
+                    # Lakukan test read frame untuk memastikan kamera benar-benar menghasilkan gambar
+                    ret, test_frame = temp_cap.read()
+                    if ret and test_frame is not None:
+                        cap = temp_cap
+                        print(f"Kamera berhasil dibuka pada indeks {idx}!")
+                        break
+                    else:
+                        temp_cap.release()
+            except Exception:
+                pass
+        if cap is not None:
+            break
+            
+    if cap is None:
         print("[ERROR] Gagal membuka kamera.")
         print("Solusi:")
         print(" 1. Pastikan kamera terhubung (webcam eksternal/internal).")
         print(" 2. Pastikan kamera tidak sedang digunakan oleh aplikasi lain (Zoom, Teams, Discord, dll).")
-        print(" 3. Coba ubah indeks kamera di cv2.VideoCapture(0) menjadi 1 atau 2.")
+        print(" 3. Pastikan izin akses kamera di Settings Windows (Privacy & Security -> Camera) sudah aktif.")
         return
 
-    print("Kamera berhasil dibuka.")
     print("KONTROL PADA WINDOW KAMERA:")
     print(" -> Tekan tombol 'T' : Mengaktifkan/menonaktifkan mode kotak target (ROI)")
     print(" -> Tekan tombol 'Q' : Keluar dari program")
