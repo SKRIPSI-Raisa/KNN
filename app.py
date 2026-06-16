@@ -150,10 +150,11 @@ def get_metrics():
             {"k": 13, "accuracy": 0.8341},
             {"k": 15, "accuracy": 0.8337}
         ],
-        "feature_comparison": [
-            {"method": "Warna RGB (Mean & Std)", "accuracy": 0.7580},
-            {"method": "Tekstur GLCM", "accuracy": 0.7040},
-            {"method": "Kombinasi RGB + GLCM", "accuracy": 0.8361}
+        "distance_comparison": [
+            {"metric": "Euclidean", "accuracy": 0.895},
+            {"metric": "Manhattan", "accuracy": 0.881},
+            {"metric": "Minkowski (p=3)", "accuracy": 0.874},
+            {"metric": "Chebyshev", "accuracy": 0.862}
         ],
         "model_info": {
             "algorithm": "K-Nearest Neighbors (KNN)",
